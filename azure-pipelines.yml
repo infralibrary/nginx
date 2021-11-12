@@ -1,0 +1,92 @@
+name: $(SourceBranchName)-$(tag)-$(Date:yyyyMMdd)$(Rev:.r)
+
+trigger: none
+pr: none
+
+resources:
+- repo: self
+
+variables:
+- group: build
+- name: tag
+  value: 1.20.1
+
+stages:
+- stage: Build
+  displayName: Build
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      name: Default
+    steps:
+    - checkout: self
+      clean: true
+    - bash: |
+          docker system prune -a -f
+      displayName: Clean Docker
+      enabled: "true"
+    - task: Bash@3
+      displayName: Build image
+      enabled: "true"
+      inputs:
+        targetType: 'inline'
+        script: |
+          #!/bin/bash
+          docker build --no-cache --file mainline/alpine3.12/Dockerfile -t $(DOCKER_REGISTRY_URL)/infralibrary/nginx:$(tag)-alpine3.12 \
+                                                                        -t $(ALIYUN_REGISTRY_URL)/infralibrary/nginx:$(tag)-alpine3.12 . 
+                                                         
+          docker build --no-cache --file mainline/alpine3.14/Dockerfile -t $(DOCKER_REGISTRY_URL)/infralibrary/nginx:$(tag)-alpine3.14 \
+                                                                        -t $(DOCKER_REGISTRY_URL)/infralibrary/nginx:$(tag)-alpine \
+                                                                        -t $(DOCKER_REGISTRY_URL)/infralibrary/nginx:$(tag) \
+                                                                        -t $(DOCKER_REGISTRY_URL)/infralibrary/nginx:latest \
+                                                                        -t $(ALIYUN_REGISTRY_URL)/infralibrary/nginx:$(tag)-alpine3.14 \
+                                                                        -t $(ALIYUN_REGISTRY_URL)/infralibrary/nginx:$(tag)-alpine \
+                                                                        -t $(ALIYUN_REGISTRY_URL)/infralibrary/nginx:$(tag) \
+                                                                        -t $(ALIYUN_REGISTRY_URL)/infralibrary/nginx:latest .
+          docker images 
+    - task: Docker@2
+      displayName: Login Docker Registry
+      inputs:
+        containerRegistry: 'docker.io'
+        command: login
+        addPipelineData: false
+        addBaseImageData: false
+    - task: Docker@2
+      displayName: Login Aliyun Registry
+      inputs:
+        containerRegistry: 'registry.aliyuncs.com'
+        command: login
+        addPipelineData: false
+        addBaseImageData: false
+    - task: Bash@3
+      displayName: Push image
+      enabled: "true"
+      inputs:
+        targetType: 'inline'
+        script: |
+          #!/bin/bash
+          for reg in $(DOCKER_REGISTRY_URL) $(ALIYUN_REGISTRY_URL);
+          do
+            docker push ${reg}/infralibrary/nginx:$(tag)-alpine3.12
+            docker push ${reg}/infralibrary/nginx:$(tag)-alpine3.14
+            docker push ${reg}/infralibrary/nginx:$(tag)-alpine
+            docker push ${reg}/infralibrary/nginx:$(tag)
+            docker push ${reg}/infralibrary/nginx:latest
+          done
+    - task: Bash@3
+      displayName: Delete image
+      enabled: "true"
+      inputs:
+        targetType: 'inline'
+        script: |
+          #!/bin/bash
+          for reg in $(DOCKER_REGISTRY_URL) $(ALIYUN_REGISTRY_URL);
+          do
+            docker rmi -f ${reg}/infralibrary/nginx:$(tag)-alpine3.12
+            docker rmi -f ${reg}/infralibrary/nginx:$(tag)-alpine3.14
+            docker rmi -f ${reg}/infralibrary/nginx:$(tag)-alpine
+            docker rmi -f ${reg}/infralibrary/nginx:$(tag)
+            docker rmi -f ${reg}/infralibrary/nginx:latest
+          done
+...
