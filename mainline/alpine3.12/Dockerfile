@@ -1,6 +1,6 @@
 FROM alpine:3.12
 
-RUN  export NGINX_VERSION='1.20.1' \
+RUN  export NGINX_VERSION='1.20.2' \
      && export CONFIG="\
           --prefix=/etc/nginx \
           --sbin-path=/usr/sbin/nginx \
@@ -142,7 +142,7 @@ RUN  export NGINX_VERSION='1.20.1' \
           && rm  nginx-limit-speed-module.tar.gz \
           && rm  nginx_http_upstream_check_module.tar.gz \
           && ls -l /usr/src/nginx-$NGINX_VERSION/modules \
-     && patch -p1 < /usr/src/nginx-$NGINX_VERSION/modules/nginx_http_upstream_check_module/check_$NGINX_VERSION+.patch \
+     && patch -p1 < /usr/src/nginx-$NGINX_VERSION/modules/nginx_http_upstream_check_module/check_1.20.1+.patch \
      && ./configure $CONFIG \
           && make -j$(getconf _NPROCESSORS_ONLN) \
           && make install \
