@@ -91,8 +91,6 @@ RUN  export NGINX_VERSION='1.20.2' \
                     psmisc \
                     ncurses-dev \
                     libevent-dev \
-                    openldap \
-                    openldap-dev \
           && curl -L "https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz" -o nginx.tar.gz \
           && curl -L "http://storage.corpintra.plus/nginx/modules/lua-5.1.5.tar.gz" -o lua-5.1.5.tar.gz \
           && curl -L "http://storage.corpintra.plus/nginx/modules/luajit2-2.1-20201229.tar.gz" -o luajit2-2.1-20201229.tar.gz \
